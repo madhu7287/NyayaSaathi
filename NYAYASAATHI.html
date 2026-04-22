@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyayasaathi Portal</title>
+    <style>
+        :root {
+            --primary-blue: #063970;
+            --secondary-orange: #ee8133;
+            --light-gray: #f4f4f4;
+            --dark-blue: #04244a;
+            --danger-red: #d32f2f;
+            --success-green: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background-color: var(--light-gray);
+            overflow-x: hidden;
+        }
+
+        /* --- AUTH & INTRO OVERLAY --- */
+        #intro-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1541829070764-84a7d30dee62?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover; background-position: center;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; transition: opacity 0.8s ease, visibility 0.8s;
+        }
+        .intro-box {
+            background: white; padding: 30px; border-radius: 15px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 400px; width: 90%;
+            animation: scaleUp 0.5s ease-out;
+        }
+        .auth-form input {
+            width: 100%; padding: 10px; margin: 8px 0;
+            border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
+        }
+        .auth-toggle {
+            color: var(--primary-blue); cursor: pointer; text-decoration: underline; font-size: 0.9rem;
+        }
+        @keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* --- NAVIGATION --- */
+        header {
+            background: var(--primary-blue);
+            color: white; padding: 0 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000; height: 70px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: white; text-decoration: none; }
+        .nav-buttons { display: flex; height: 100%; align-items: center; }
+        .dropdown { position: relative; display: inline-block; height: 100%; }
+        .nav-btn {
+            background: transparent; color: white; border: none;
+            padding: 0 20px; height: 70px; cursor: pointer;
+            font-size: 0.9rem; font-weight: bold; transition: 0.3s;
+            display: flex; align-items: center;
+        }
+        .nav-btn:hover, .nav-btn.active { background: var(--dark-blue); color: var(--secondary-orange); }
+        .dropdown-content {
+            display: none; position: absolute; background-color: var(--dark-blue);
+            min-width: 220px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1001; border-top: 2px solid var(--secondary-orange);
+        }
+        .dropdown-content button {
+            color: white; padding: 12px 16px; text-decoration: none;
+            display: block; width: 100%; text-align: left;
+            background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer; font-size: 0.85rem;
+        }
+        .dropdown-content button:hover { background-color: var(--primary-blue); color: var(--secondary-orange); }
+        .dropdown:hover .dropdown-content { display: block; }
+
+        .lang-select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; cursor: pointer; margin-left: 10px; }
+
+        /* --- PAGE CONTENT --- */
+        .page {
+            display: none; max-width: 1200px; margin: 40px auto;
+            padding: 30px; background: white; border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); animation: fadeIn 0.4s ease-in-out;
+        }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: var(--primary-blue); border-bottom: 3px solid var(--secondary-orange); padding-bottom: 10px; }
+
+        /* --- DASHBOARD STYLES --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .dash-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            border-top: 5px solid var(--secondary-orange);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+        .dash-card:hover { transform: translateY(-5px); }
+        .dash-card h4 { margin: 0 0 10px 0; color: var(--primary-blue); font-size: 1.2rem; }
+        .dash-info { font-size: 0.9rem; margin-bottom: 5px; color: #555; }
+        .dash-id { 
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 12px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        /* --- SUPPORT PAGE STYLES --- */
+        .support-container { max-width: 700px; margin: 0 auto; }
+        .support-box {
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .support-box textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* --- GRID SCHEMES --- */
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .item-button {
+            background: white; border: 1px solid #ddd; padding: 20px;
+            text-align: center; font-size: 0.95rem; font-weight: 600; color: var(--primary-blue);
+            cursor: pointer; border-radius: 8px; transition: all 0.3s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 140px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .item-button:hover { 
+            border-color: var(--secondary-orange); 
+            transform: translateY(-5px); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+        }
+        .item-button span { font-size: 0.75rem; color: var(--secondary-orange); margin-top: 10px; }
+
+        /* --- REGISTRATION FORM & CARD --- */
+        .reg-container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary-blue); }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .submit-btn { background: var(--primary-blue); color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; margin-top: 10px; }
+        .submit-btn:hover { background: var(--dark-blue); }
+
+        #id-card-output { margin-top: 40px; display: none; justify-content: center; }
+        .id-card {
+            width: 350px; background: white; border-radius: 15px; overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: 2px solid var(--primary-blue);
+            position: relative;
+        }
+        .card-header { background: var(--primary-blue); color: white; text-align: center; padding: 10px; }
+        .card-body { padding: 20px; }
+        .card-row { margin-bottom: 10px; font-size: 0.9rem; }
+        .card-row strong { color: var(--primary-blue); }
+        .card-footer { background: var(--light-gray); padding: 10px; text-align: center; font-weight: bold; color: var(--secondary-orange); font-size: 1.1rem; border-top: 1px dashed #ccc; }
+        .emblem-watermark { position: absolute; opacity: 0.05; right: 10px; bottom: 50px; width: 100px; pointer-events: none; }
+
+        /* --- MODAL --- */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px); overflow-y: auto;
+        }
+        .modal-content {
+            background-color: white; margin: 5% auto; padding: 30px;
+            border-radius: 15px; width: 80%; max-width: 800px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: slideDown 0.4s;
+        }
+        @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-header { color: var(--primary-blue); border-bottom: 2px solid var(--secondary-orange); margin-bottom: 15px; padding-bottom: 10px; }
+        .modal-section { margin-bottom: 15px; padding: 10px; border-radius: 5px; border-bottom: 1px solid #eee; }
+        .modal-section h4 { color: var(--primary-blue); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem; }
+        .modal-section p { font-size: 0.95rem; color: #444; line-height: 1.6; }
+
+        /* Objectives Styling */
+        .obj-box { background: #fff; padding: 25px; border-radius: 12px; border-left: 6px solid var(--primary-blue); box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .obj-box h3 { color: var(--secondary-orange); margin-top: 0; }
+        .obj-box ul { list-style: none; padding: 0; }
+        .obj-box ul li { margin-bottom: 12px; padding-left: 30px; position: relative; line-height: 1.6; }
+        .obj-box ul li::before { content: "✔"; position: absolute; left: 0; color: var(--primary-blue); font-weight: bold; }
+
+        /* Gallery */
+        .gallery-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+        .worker-card { position: relative; overflow: hidden; border-radius: 10px; height: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .worker-card img { width: 100%; height: 100%; object-fit: cover; }
+        .worker-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(6, 57, 112, 0.9); color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 0.9rem; }
+
+        .about-content { line-height: 1.8; color: #333; text-align: justify; background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid var(--primary-blue); }
+        .go-btn { background: var(--secondary-orange); border: none; color: white; padding: 12px 25px; border-radius: 5px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        footer { text-align: center; padding: 20px; color: #666; font-size: 0.8rem; border-top: 1px solid #ddd; margin-top: 40px; }
+
+        @media (max-width: 900px) { .item-grid, .gallery-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div id="intro-overlay">
+        <div class="intro-box">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/200px-Emblem_of_India.svg.png" alt="Emblem" style="height: 60px;">
+            <h3 data-lang="ministry">Ministry of Labour & Employment</h3>
+            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-blue); margin-bottom: 15px;">Nyayasaathi</div>
+            
+            <select class="lang-select" onchange="updateLanguage(this.value)" id="intro-lang" style="margin-bottom: 15px; width: 150px;">
+                <option value="en">English</option>
+                <option value="te">తెలుగు (Telugu)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="ta">தமிழ் (Tamil)</option>
+                <option value="ml">മലയാളം (Malayalam)</option>
+            </select>
+
+            <div id="auth-section">
+                <div id="register-view" style="display: none;">
+                    <h4 data-lang="regTitle">New User Registration</h4>
+                    <form onsubmit="handleAuth(event, 'register')" class="auth-form">
+                        <input type="text" id="authRegName" placeholder="Full Name" required>
+                        <input type="tel" id="authRegPhone" placeholder="Phone Number" pattern="[0-9]{10}" required>
+                        <input type="password" id="authRegPass" placeholder="Password" required>
+                        <button type="submit" class="go-btn" style="width: 100%; margin-top: 10px;">Register</button>
+                    </form>
+                    <p style="margin-top: 15px; font-size: 0.85rem;">Already have an account? <span class="auth-toggle" onclick="toggleAuth('login')">Login here</span></p>
+                </div>
+
+                <div id="login-view">
+                    <h4 data-lang="loginTitle">User Login</h4>
+                    <form onsubmit="handleAuth(event, 'login')" class="auth-form">
+                        <input type="tel" id="authLogPhone" placeholder="Phone Number" pattern="[0-9]{10}" required>
+                        <input type="password" id="authLogPass" placeholder="Password" required>
+                        <button type="submit" class="go-btn" style="width: 100%; margin-top: 10px;">Login</button>
+                    </form>
+                    <p style="margin-top: 15px; font-size: 0.85rem;">New user? <span class="auth-toggle" onclick="toggleAuth('register')">Create an account</span></p>
+                </div>
+            </div>
+            <div id="auth-error" style="color: var(--danger-red); font-size: 0.8rem; margin-top: 10px; display: none;"></div>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle" class="modal-header"></h3>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <div id="main-portal" style="display: none;">
+        <header>
+            <a href="#" class="logo">Nyayasaathi</a>
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="showPage('home')" data-lang="home">Home</button>
+                <div class="dropdown">
+                    <button class="nav-btn" data-lang="about">About Us ▼</button>
+                    <div class="dropdown-content">
+                        <button onclick="showPage('about-ministry')" data-lang="aboutMin">About the Ministry</button>
+                        <button onclick="showPage('objectives')" data-lang="objectives">Objectives</button>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="nav-btn" data-lang="schemes">Schemes ▼</button>
+                    <div class="dropdown-content">
+                        <button onclick="showPage('social-schemes')" data-lang="socialSch">Social Security Schemes</button>
+                        <button onclick="showPage('employment-schemes')" data-lang="employSch">Employment Schemes</button>
+                    </div>
+                </div>
+                <button class="nav-btn" onclick="showPage('acts-rules')" data-lang="acts">Acts & Rules</button>
+                <button class="nav-btn" onclick="showPage('registration')" data-lang="reg">Registration</button>
+                <button class="nav-btn" onclick="showPage('dashboard')">Dashboard</button>
+                <button class="nav-btn" onclick="showPage('support')" data-lang="support">Support</button>
+                <select class="lang-select" onchange="updateLanguage(this.value)" id="nav-lang">
+                    <option value="en">EN</option><option value="te">తె</option><option value="hi">हि</option><option value="ta">த</option><option value="ml">മ</option>
+                </select>
+                <button class="nav-btn" onclick="location.reload()" style="color: var(--secondary-orange);">Logout</button>
+            </div>
+        </header>
+
+        <div id="home" class="page active">
+            <h2 data-lang="galleryTitle">Unorganised Workers Welfare Gallery</h2>
+            <div class="gallery-row">
+                <div class="worker-card"><img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=600&q=80"><div class="worker-label" data-lang="labelCon">Construction Sector</div></div>
+                <div class="worker-card"><img src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=600&q=80"><div class="worker-label" data-lang="labelAgr">Agriculture Labourers</div></div>
+                <div class="worker-card"><img src="https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?auto=format&fit=crop&w=600&q=80"><div class="worker-label" data-lang="labelVen">Street Vendors</div></div>
+            </div>
+        </div>
+
+        <div id="about-ministry" class="page">
+            <h2 data-lang="aboutMin">About the Ministry</h2>
+            <div class="about-content" id="about-text-content"></div>
+        </div>
+
+        <div id="objectives" class="page">
+            <h2 data-lang="objectives">Objectives</h2>
+            <div class="obj-box">
+                <h3 data-lang="objTitle">Objectives of Nyayasaathi Portal</h3>
+                <ul>
+                    <li>Creation of a centralized database of all unorganized workers (UWs) seeded with Aadhaar.</li>
+                    <li>Improvement of implementation efficiency of the social security services.</li>
+                    <li>Integration of Social Security Schemes managed by MoLE and other ministries.</li>
+                    <li>Sharing of worker information with various stakeholders through APIs.</li>
+                    <li>Ensuring portability of social security and welfare benefits for migrant workers.</li>
+                    <li>Tackling National Crises like COVID-19 by providing a comprehensive database.</li>
+                </ul>
+            </div>
+            <div class="obj-box">
+                <h3 data-lang="whoReg">Who can register?</h3>
+                <ul>
+                    <li>An unorganised worker (UW).</li>
+                    <li>Age between 16-59 years.</li>
+                    <li>Not a member of EPFO/ESIC or NPS (Govt. funded).</li>
+                </ul>
+            </div>
+            <div class="obj-box">
+                <h3 data-lang="whoUnorg">Who is an Unorganised Worker?</h3>
+                <p>Any worker who is a home-based worker, self-employed worker, or a wage worker in the unorganised sector. This includes workers in the organised sector who are not members of ESIC/EPFO or not Govt. employees.</p>
+            </div>
+            <div class="obj-box">
+                <h3 data-lang="regReq">Registration Requirements</h3>
+                <ul>
+                    <li>Aadhaar Number</li>
+                    <li>Mobile number linked with Aadhaar.</li>
+                    <li>Savings Bank Account number with IFSC code.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="social-schemes" class="page">
+            <h2 data-lang="socialSch">Social Security Welfare Schemes</h2>
+            <div class="item-grid" id="schemes-list"></div>
+        </div>
+
+        <div id="employment-schemes" class="page">
+            <h2 data-lang="employSch">Employment Schemes</h2>
+            <div class="item-grid" id="employ-list"></div>
+        </div>
+
+        <div id="acts-rules" class="page">
+            <h2 data-lang="acts">Acts & Rules</h2>
+            <div class="item-grid" id="acts-list"></div>
+        </div>
+
+        <div id="registration" class="page">
+            <h2 data-lang="reg">Registration</h2>
+            <div class="reg-container">
+                <p style="color: #666; margin-bottom: 25px;">Please fill in your details to register and generate your Nyayasaathi Identity Card.</p>
+                <form id="registrationForm" onsubmit="generateCard(event)">
+                    <div class="form-group">
+                        <label for="regName">Full Name</label>
+                        <input type="text" id="regName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPhone">Phone Number</label>
+                        <input type="tel" id="regPhone" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regAadhaar">Aadhaar Number</label>
+                        <input type="text" id="regAadhaar" placeholder="12-digit Aadhaar number" pattern="[0-9]{12}" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Register & Generate Card</button>
+                </form>
+
+                <div id="id-card-output">
+                    <div class="id-card">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/200px-Emblem_of_India.svg.png" class="emblem-watermark">
+                        <div class="card-header">
+                            <div style="font-size: 0.7rem; text-transform: uppercase;">Government of India</div>
+                            <div style="font-size: 1rem; font-weight: bold;">Nyayasaathi Digital ID</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-row"><strong>Name:</strong> <span id="cardNameDisplay"></span></div>
+                            <div class="card-row"><strong>Phone:</strong> <span id="cardPhoneDisplay"></span></div>
+                            <div class="card-row"><strong>Aadhaar:</strong> <span id="cardAadhaarDisplay"></span></div>
+                            <div class="card-row"><strong>Status:</strong> <span style="color:var(--success-green); font-weight:bold;">Verified Worker</span></div>
+                        </div>
+                        <div class="card-footer">ID: <span id="cardIDDisplay"></span></div>
+                    </div>
+                </div>
+                <div id="successMsg" style="display:none; color: var(--success-green); font-weight: bold; text-align: center; margin-top: 20px;">Registration Successful!</div>
+            </div>
+        </div>
+
+        <div id="dashboard" class="page">
+            <h2>Worker Dashboard</h2>
+            <p>List of all registered workers and their unique identity numbers.</p>
+            <div id="dashboard-content" class="dashboard-grid">
+                <p id="no-data-msg">No workers registered yet.</p>
+            </div>
+        </div>
+
+        <div id="support" class="page">
+            <h2 data-lang="support">Support</h2>
+            <div class="support-container">
+                <h3 style="color: var(--primary-blue);">Nyayasaathi Help Center</h3>
+                <div class="support-box">
+                    <form id="supportForm" onsubmit="submitSupportForm(event)">
+                        <div class="form-group">
+                            <label for="supportSubject">Subject</label>
+                            <input type="text" id="supportSubject" placeholder="e.g., Card Correction" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supportDesc">Description</label>
+                            <textarea id="supportDesc" placeholder="Please describe your query..." required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">Submit Request</button>
+                    </form>
+                    <div id="supportSuccessMsg" style="display:none; color: var(--success-green); font-weight: bold; text-align: center; margin-top: 20px;">
+                        Submitted! Ticket ID: #NYA-<span id="ticketId"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer><p data-lang="footer">© 2026 Ministry of Labour & Employment. All Rights Reserved.</p></footer>
+    </div>
+
+    <script>
+        // AUTH SYSTEM DATA
+        let registeredUsers = [];
+
+        function toggleAuth(view) {
+            document.getElementById('auth-error').style.display = 'none';
+            if(view === 'register') {
+                document.getElementById('register-view').style.display = 'block';
+                document.getElementById('login-view').style.display = 'none';
+            } else {
+                document.getElementById('register-view').style.display = 'none';
+                document.getElementById('login-view').style.display = 'block';
+            }
+        }
+
+        function handleAuth(event, type) {
+            event.preventDefault();
+            const errorDiv = document.getElementById('auth-error');
+            errorDiv.style.display = 'none';
+
+            if(type === 'register') {
+                const name = document.getElementById('authRegName').value;
+                const phone = document.getElementById('authRegPhone').value;
+                const pass = document.getElementById('authRegPass').value;
+
+                if(registeredUsers.find(u => u.phone === phone)) {
+                    errorDiv.innerText = "Phone already registered. Please Login.";
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                registeredUsers.push({ name, phone, pass });
+                alert("Registration successful! Please login now.");
+                toggleAuth('login');
+            } else {
+                const phone = document.getElementById('authLogPhone').value;
+                const pass = document.getElementById('authLogPass').value;
+
+                const user = registeredUsers.find(u => u.phone === phone && u.pass === pass);
+
+                if(user) {
+                    enterSite();
+                } else {
+                    errorDiv.innerText = "Invalid phone or password!";
+                    errorDiv.style.display = 'block';
+                }
+            }
+        }
+
+        const uiStrings = {
+            en: {
+                ministry: "Ministry of Labour & Employment", home: "Home", about: "About Us ▼", 
+                aboutMin: "About the Ministry", objectives: "Objectives", schemes: "Schemes ▼", socialSch: "Social Security Schemes", 
+                employSch: "Employment Schemes", acts: "Acts & Rules", reg: "Registration", support: "Support",
+                galleryTitle: "Unorganised Workers Welfare Gallery", labelCon: "Construction Sector", labelAgr: "Agriculture Labourers", labelVen: "Street Vendors",
+                detailsLabel: "View Details →", footer: "© 2026 Ministry of Labour & Employment. All Rights Reserved.",
+                regTitle: "New User Registration", loginTitle: "User Login",
+                aboutPara: "The Ministry of Labour & Employment is one of the oldest and important Ministries of the Government of India. The main responsibility of the Ministry is to protect and safeguard the interests of workers in general and those who constitute the poor, deprived and disadvantage sections of the society."
+            },
+            te: {
+                ministry: "కార్మిక మరియు ఉపాధి మంత్రిత్వ శాఖ", home: "హోమ్", about: "మా గురించి ▼", 
+                aboutMin: "మంత్రిత్వ శాఖ గురించి", objectives: "లక్ష్యాలు", schemes: "పథకాలు ▼", socialSch: "సామాజిక భద్రతా పథకాలు", 
+                employSch: "ఉపాధి పథకాలు", acts: "చట్టాలు & నిబంధనలు", reg: "రిజిస్ట్రేషన్", support: "మద్దతు",
+                galleryTitle: "అసంఘటిత కార్మిక సంక్షేమ గ్యాలరీ", labelCon: "నిర్మాణ రంగం", labelAgr: "వ్యవసాయం", labelVen: "వీధి వ్యాపారులు",
+                regTitle: "కొత్త వినియోగదారు నమోదు", loginTitle: "వినియోగదారు లాగిన్"
+            }
+        };
+
+        const socialData = {
+            'en': {
+                'PM Shram Yogi Maan-Dhan (PM-SYM)': { elig: 'Unorganised Workers (18-40 years), Income < ₹15,000.', benefits: 'Monthly pension of ₹3,000 after age 60.' },
+                'NPS for Traders': { elig: 'Indian Citizen (18-40 years), Annual turnover < 1.5 Crore.', benefits: 'Monthly pension of ₹3,000 after age 60.' },
+                'PMJJBY': { elig: 'Indian Citizen (18-50 years).', benefits: '₹2 Lakh on death. Premium ₹436/year.' },
+                'PMSBY': { elig: 'Indian Citizen (18-70 years).', benefits: '₹2 Lakh for death/disability. Premium ₹20/year.' },
+                'Atal Pension Yojana': { elig: 'Indian citizen (18-40 years).', benefits: 'Choice of pension ₹1000-₹5000.' },
+                'AB-PMJAY (Ayushman Bharat)': { elig: 'Low income families.', benefits: 'Health coverage of ₹5 Lakh per family.' }
+            }
+        };
+
+        const employmentData = {
+            'en': {
+                'MGNREGA': { elig: 'Indian Citizen, Age > 18, Rural resident.', benefits: '100 days of wage employment per household per year.' },
+                'DDU-GKY': { elig: 'Indian Citizen, Age 15-35.', benefits: 'Skill training for rural youth.' },
+                'Garib Kalyan Rozgar Yojana': { elig: 'Indian Citizen, Workers in 25 identified areas.', benefits: 'Employment for 125 days.' },
+                'DAY-NULM': { elig: 'Any Indian citizen intending to get trained on skills.', benefits: 'Enhance skills and self-business.' },
+                'PM SVANidhi': { elig: 'Indian Citizen, Street vendors.', benefits: 'Working capital loan up to ₹10,000.' },
+                'PMKVY': { elig: 'Indian Citizen, 10th/12th dropouts.', benefits: 'Skill training support.' },
+                'PMEGP': { elig: 'Indian Citizen, Age > 18.', benefits: 'Financial assistance for new enterprises.' }
+            }
+        };
+
+        const actsData = {
+            'en': {
+                'Unorganised Workers Social Security Act, 2008': { stat: 'Around 88% of workforce is unorganised.', pen: 'Includes welfare rules 2009.' },
+                'The Contract Labour Act 1970': { stat: 'Regulates contract hiring.', pen: 'Registered at CL Central Rules, 1971.' },
+                'Inter-State Migrant Workmen Act 1979': { stat: 'Applicable to establishments with 5+ migrant workers.', pen: 'Sub synced in OSH code.' },
+                'The Minimum Wages Act 1948': { stat: 'Protects workers against low pay.', pen: 'Provincial fixation of wages.' }
+            }
+        };
+
+        let currentLang = 'en';
+        let registeredWorkers = [];
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('nav-lang').value = lang;
+            document.getElementById('intro-lang').value = lang;
+            const content = uiStrings[lang] || uiStrings['en'];
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if(content[key]) el.innerText = content[key];
+            });
+            document.getElementById('about-text-content').innerText = content.aboutPara || uiStrings['en'].aboutPara;
+            renderList('schemes-list', socialData['en'], 'scheme');
+            renderList('employ-list', employmentData['en'], 'scheme');
+            renderList('acts-list', actsData['en'], 'act');
+        }
+
+        function renderList(containerId, data, type) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            container.innerHTML = '';
+            Object.keys(data).forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = 'item-button';
+                btn.innerHTML = `${key} <span>View Details →</span>`;
+                btn.onclick = () => openModalContent(key, data[key], type);
+                container.appendChild(btn);
+            });
+        }
+
+        function openModalContent(title, data, type) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = type === 'scheme' ? 
+                `<div class="modal-section"><h4>Eligibility</h4><p>${data.elig}</p></div><div class="modal-section"><h4>Benefits</h4><p>${data.benefits}</p></div>` :
+                `<div class="modal-section"><h4>Context</h4><p>${data.stat}</p></div><div class="modal-section"><h4>Details</h4><p>${data.pen}</p></div>`;
+            document.getElementById('infoModal').style.display = "block";
+        }
+
+        function enterSite() {
+            document.getElementById('intro-overlay').style.opacity = '0';
+            setTimeout(() => { 
+                document.getElementById('intro-overlay').style.visibility = 'hidden'; 
+                document.getElementById('main-portal').style.display = 'block';
+            }, 800);
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if(pageId === 'dashboard') updateDashboardUI();
+            window.scrollTo(0, 0);
+        }
+
+        function updateDashboardUI() {
+            const container = document.getElementById('dashboard-content');
+            if(registeredWorkers.length === 0) {
+                container.innerHTML = '<p id="no-data-msg">No workers registered yet.</p>';
+                return;
+            }
+            container.innerHTML = '';
+            registeredWorkers.forEach(worker => {
+                const card = document.createElement('div');
+                card.className = 'dash-card';
+                card.innerHTML = `<h4>${worker.name}</h4><div class="dash-info">Phone: ${worker.phone}</div><div class="dash-id">NS-${worker.id}</div>`;
+                container.appendChild(card);
+            });
+        }
+
+        function generateCard(event) {
+            event.preventDefault();
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regPhone').value;
+            const aadhaar = document.getElementById('regAadhaar').value;
+            const uniqueID = Math.floor(1000000 + Math.random() * 9000000);
+            registeredWorkers.push({ name, phone, aadhaar: "**** **** " + aadhaar.slice(-4), id: uniqueID });
+            document.getElementById('cardNameDisplay').innerText = name;
+            document.getElementById('cardPhoneDisplay').innerText = phone;
+            document.getElementById('cardAadhaarDisplay').innerText = "**** **** " + aadhaar.slice(-4);
+            document.getElementById('cardIDDisplay').innerText = "NS-" + uniqueID;
+            document.getElementById('id-card-output').style.display = "flex";
+            document.getElementById('successMsg').style.display = "block";
+            document.getElementById('registrationForm').reset();
+        }
+
+        function submitSupportForm(event) {
+            event.preventDefault();
+            document.getElementById('ticketId').innerText = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('supportSuccessMsg').style.display = "block";
+            document.getElementById('supportForm').reset();
+        }
+
+        function closeModal() { document.getElementById('infoModal').style.display = "none"; }
+        window.onclick = e => { if (e.target == document.getElementById('infoModal')) closeModal(); }
+        updateLanguage('en');
+    </script>
+</body>
+</html>
